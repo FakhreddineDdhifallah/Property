@@ -1,0 +1,70 @@
+# Trigger pipeline on changes to the main branch
+trigger:
+  branches:
+    include:
+      - main
+
+# Use the latest Ubuntu image for the build agent
+pool:
+  vmImage: 'ubuntu-latest'
+
+# Variables for consistency
+variables:
+  nodeVersion: '16.x'
+
+steps:
+  # Step 1: Install Node.js
+  - task: NodeTool@0
+    inputs:
+      versionSpec: $(nodeVersion)
+
+  # Step 2: Install Backend Dependencies
+  - script: |
+      cd api
+      npm install
+    displayName: 'Install Backend Dependencies'
+
+  # Step 3: Run Backend Tests (Optional)
+  - script: |
+      cd api
+      npm test
+    displayName: 'Run Backend Tests'
+
+  # Step 4: Install Frontend Dependencies
+  - script: |
+      cd client
+      npm install
+    displayName: 'Install Frontend Dependencies'
+
+  # Step 5: Build Frontend
+  - script: |
+      cd client
+      npm run build
+    displayName: 'Build Frontend'
+
+  # Step 6: Install Socket Dependencies
+  - script: |
+      cd socket
+      npm install
+    displayName: 'Install Socket Dependencies'
+
+  # Step 7: Publish Frontend Artifacts
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: 'client/dist'
+      artifact: 'frontend'
+    displayName: 'Publish Frontend Artifacts'
+
+  # Step 8: Publish Backend Artifacts
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: 'api'
+      artifact: 'backend'
+    displayName: 'Publish Backend Artifacts'
+
+  # Step 9: Publish Socket Artifacts
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: 'socket'
+      artifact: 'socket'
+    displayName: 'Publish Socket Artifacts'
